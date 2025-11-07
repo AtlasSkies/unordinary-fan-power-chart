@@ -98,8 +98,8 @@ h1 {
   flex-wrap: wrap;
   justify-content: center;
   align-items: flex-start;
-  /* Reduced horizontal gap to bring chart 1 closer to inputs/center */
-  gap: 20px;
+  /* Increased gap to accommodate the larger chart area */
+  gap: 30px;
   max-width: 1200px;
   width: 100%;
 }
@@ -188,8 +188,9 @@ button:hover {
 /* ===== Chart Area ===== */
 .chart-area {
   position: relative;
-  width: clamp(300px, 40vw, 450px);
-  height: clamp(300px, 40vw, 450px);
+  /* Increased max size from 450px to 500px to fix the "Speed" label cutoff issue */
+  width: clamp(300px, 40vw, 500px); 
+  height: clamp(300px, 40vw, 500px);
   background: none;
 }
 
