@@ -12,6 +12,95 @@ const recoveryInput = document.getElementById('recoveryInput');
 const defenseInput = document.getElementById('defenseInput');
 const colorPicker = document.getElementById('colorPicker');
 
+// Plugin for gradient background + proper alignment
+const radarBackgroundPlugin = {
+  id: 'customPentagonBackground',
+  beforeDraw(chart) {
+    const opts = chart.config.options.customBackground;
+    if (!opts?.enabled) return;
+
+    const rScale = chart.scales.r;
+    const ctx = chart.ctx;
+    const centerX = rScale.xCenter;
+    const centerY = rScale.yCenter + opts.offsetY; // offset both chart + background
+    const radius = rScale.drawingArea;
+
+    // background gradient
+    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+    gradient.addColorStop(0, '#f8fcff');
+    gradient.addColorStop(0.25, '#92dfec');
+    gradient.addColorStop(1, '#92dfec');
+
+    const totalPoints = chart.data.labels.length;
+    const angleOffset = -Math.PI / 2; // top
+
+    ctx.save();
+
+    // Pentagon background
+    ctx.beginPath();
+    for (let i = 0; i < totalPoints; i++) {
+      const angle = angleOffset + (i * 2 * Math.PI / totalPoints);
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+    ctx.strokeStyle = '#184046';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Spokes
+    ctx.beginPath();
+    for (let i = 0; i < totalPoints; i++) {
+      const angle = angleOffset + (i * 2 * Math.PI / totalPoints);
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#6db5c0';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+};
+
+// Plugin for outlined axis text
+const outlinedLabelsPlugin = {
+  id: 'outlinedLabels',
+  afterDraw(chart) {
+    const ctx = chart.ctx;
+    const rScale = chart.scales.r;
+    const labels = chart.data.labels;
+    const total = labels.length;
+    const centerX = rScale.xCenter;
+    const centerY = rScale.yCenter + (chart.config.options.customBackground?.offsetY || 0);
+    const radius = rScale.drawingArea + 20;
+    const baseAngle = -Math.PI / 2;
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'italic 16px Candara';
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = chartColor;
+    ctx.fillStyle = 'white';
+
+    for (let i = 0; i < total; i++) {
+      const angle = baseAngle + (i * 2 * Math.PI / total);
+      const x = centerX + (radius * Math.cos(angle));
+      const y = centerY + (radius * Math.sin(angle));
+      const label = labels[i];
+      ctx.strokeText(label, x, y);
+      ctx.fillText(label, x, y);
+    }
+
+    ctx.restore();
+  }
+};
+
 function makeRadar(ctx, maxCap = null, showPoints = true, withBackground = false) {
   return new Chart(ctx, {
     type: 'radar',
@@ -35,70 +124,19 @@ function makeRadar(ctx, maxCap = null, showPoints = true, withBackground = false
           suggestedMin: 0,
           suggestedMax: maxCap ?? undefined,
           ticks: { display: false },
-          pointLabels: {
-            color: () => chartColor,
-            font: { family: 'Candara', style: 'italic', size: 16 }
-          }
+          pointLabels: { display: false } // we'll draw custom labels instead
         }
+      },
+      customBackground: {
+        enabled: withBackground,
+        offsetY: withBackground ? 10 : 0 // shift chart+data down a bit
       },
       plugins: { legend: { display: false } },
       animation: { duration: 400 },
       responsive: true,
       maintainAspectRatio: false
     },
-    plugins: [{
-      id: 'customPentagonBackground',
-      beforeDraw(chart) {
-        if (!withBackground) return;
-
-        const rScale = chart.scales.r;
-        const ctx = chart.ctx;
-        const centerX = rScale.xCenter;
-        const centerY = rScale.yCenter + 8; // shift down slightly
-        const radius = rScale.drawingArea;
-
-        // Gradient fill
-        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-        gradient.addColorStop(0, '#f8fcff');
-        gradient.addColorStop(0.25, '#92dfec');
-        gradient.addColorStop(1, '#92dfec');
-
-        const totalPoints = chart.data.labels.length;
-        const angleOffset = -Math.PI / 2; // top center
-
-        ctx.save();
-
-        // Pentagon background
-        ctx.beginPath();
-        for (let i = 0; i < totalPoints; i++) {
-          const angle = angleOffset + (i * 2 * Math.PI / totalPoints);
-          const x = centerX + radius * Math.cos(angle);
-          const y = centerY + radius * Math.sin(angle);
-          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = gradient;
-        ctx.fill();
-        ctx.strokeStyle = '#184046';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // Spokes
-        ctx.beginPath();
-        for (let i = 0; i < totalPoints; i++) {
-          const angle = angleOffset + (i * 2 * Math.PI / totalPoints);
-          const x = centerX + radius * Math.cos(angle);
-          const y = centerY + radius * Math.sin(angle);
-          ctx.moveTo(centerX, centerY);
-          ctx.lineTo(x, y);
-        }
-        ctx.strokeStyle = '#6db5c0';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        ctx.restore();
-      }
-    }]
+    plugins: [radarBackgroundPlugin, outlinedLabelsPlugin]
   });
 }
 
@@ -131,14 +169,12 @@ document.getElementById('updateBtn').addEventListener('click', () => {
   radar1.data.datasets[0].data = vals;
   radar1.data.datasets[0].borderColor = chartColor;
   radar1.data.datasets[0].backgroundColor = fillColor;
-  radar1.options.scales.r.pointLabels.color = chartColor;
   radar1.update();
 
   if (radar2Ready) {
     radar2.data.datasets[0].data = capped;
     radar2.data.datasets[0].borderColor = chartColor;
     radar2.data.datasets[0].backgroundColor = fillColor;
-    radar2.options.scales.r.pointLabels.color = chartColor;
     radar2.update();
   }
 
@@ -180,7 +216,6 @@ viewBtn.addEventListener('click', () => {
     radar2.data.datasets[0].data = vals;
     radar2.data.datasets[0].borderColor = chartColor;
     radar2.data.datasets[0].backgroundColor = fillColor;
-    radar2.options.scales.r.pointLabels.color = chartColor;
     radar2.update();
   }, 150);
 });
