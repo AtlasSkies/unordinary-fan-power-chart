@@ -12,13 +12,16 @@
   <div class="container">
     <div class="left">
       <h1>UnOrdinary Power Chart Maker</h1>
+
       <input type="file" accept="image/*" id="imgInput">
       <img id="uploadedImg" class="upload-img" alt="Uploaded Image">
-      <div class="info-box" id="infoDisplay">
+
+      <div class="info-box">
         <b>Name:</b> <span id="dispName">-</span><br>
         <b>Ability:</b> <span id="dispAbility">-</span><br>
         <b>Level:</b> <span id="dispLevel">-</span>
       </div>
+
       <div class="inputs">
         <label>Name: <input type="text" id="nameInput"></label>
         <label>Ability: <input type="text" id="abilityInput"></label>
@@ -29,6 +32,7 @@
         <label>Recovery: <input type="number" id="recoveryInput" step="0.1" min="0"></label>
         <label>Defense: <input type="number" id="defenseInput" step="0.1" min="0"></label>
         <label>Ability Color: <input type="color" id="colorPicker" value="#92dfec"></label>
+
         <button id="updateBtn">Update Chart</button>
         <button id="viewBtn">View Character Chart</button>
       </div>
@@ -51,9 +55,11 @@
           <b>Level:</b> <span id="overlayLevel">-</span>
         </div>
       </div>
+
       <div class="overlay-chart">
         <canvas id="radarChart2"></canvas>
       </div>
+
       <button id="downloadBtn">Download Character Chart</button>
     </div>
   </div>
