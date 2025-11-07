@@ -6,6 +6,7 @@ const CHART2_CENTER_DX = 0;
 const CHART2_CENTER_DY = 12;
 const CHART_SCALE_FACTOR = 0.8;
 
+/* === Helper === */
 function hexToRGBA(hex, alpha) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -13,7 +14,7 @@ function hexToRGBA(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-/* === Fix radar scale center and radius === */
+/* === Center & radius adjustment === */
 const fixedCenterPlugin = {
   id: 'fixedCenter',
   afterLayout(chart) {
@@ -76,7 +77,7 @@ const radarBackgroundPlugin = {
   }
 };
 
-/* === Outlined Axis Labels (No Cutoff) === */
+/* === Outlined Axis Labels (No Cutoff + unclipped) === */
 const outlinedLabelsPlugin = {
   id: 'outlinedLabels',
   afterDraw(chart) {
@@ -86,11 +87,15 @@ const outlinedLabelsPlugin = {
     const labels = chart.data.labels;
     const cx = r.xCenter;
     const cy = r.yCenter;
-
     const radius = r.drawingArea + Math.max(50, r.drawingArea * 0.22);
     const base = -Math.PI / 2;
 
     ctx.save();
+    ctx.resetTransform();
+    ctx.beginPath();
+    ctx.rect(0, 0, chart.canvas.width, chart.canvas.height);
+    ctx.clip();
+
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = 'italic 18px Candara';
@@ -98,19 +103,20 @@ const outlinedLabelsPlugin = {
     ctx.strokeStyle = chartColor;
     ctx.fillStyle = 'white';
 
-    labels.forEach((label, i) => {
+    for (let i = 0; i < labels.length; i++) {
       const angle = base + (i * 2 * Math.PI / labels.length);
       const x = cx + radius * Math.cos(angle);
       const y = cy + radius * Math.sin(angle);
       const yAdjusted = y + (Math.sin(angle) > 0.8 ? 10 : 0);
-      ctx.strokeText(label, x, yAdjusted);
-      ctx.fillText(label, x, yAdjusted);
-    });
+      ctx.strokeText(labels[i], x, yAdjusted);
+      ctx.fillText(labels[i], x, yAdjusted);
+    }
+
     ctx.restore();
   }
 };
 
-/* === Create Chart === */
+/* === Create Radar Chart === */
 function makeRadar(ctx, maxCap = null, showPoints = true, withBackground = false, fixed = false) {
   return new Chart(ctx, {
     type: 'radar',
@@ -157,7 +163,7 @@ window.addEventListener('load', () => {
   radar1 = makeRadar(ctx1, null, true, false, false);
 });
 
-/* === Update button === */
+/* === Update Chart === */
 document.getElementById('updateBtn').addEventListener('click', () => {
   const vals = [
     parseFloat(powerInput.value) || 0,
@@ -187,7 +193,7 @@ document.getElementById('updateBtn').addEventListener('click', () => {
   document.getElementById('dispLevel').textContent = levelInput.value || '-';
 });
 
-/* === Overlay controls === */
+/* === Overlay Controls === */
 const overlay = document.getElementById('overlay');
 const viewBtn = document.getElementById('viewBtn');
 const closeBtn = document.getElementById('closeBtn');
@@ -225,29 +231,22 @@ viewBtn.addEventListener('click', () => {
 
 closeBtn.addEventListener('click', () => overlay.classList.add('hidden'));
 
-/* === Download without buttons === */
+/* === Download (hides buttons temporarily) === */
 downloadBtn.addEventListener('click', () => {
   const btn = document.getElementById('downloadBtn');
   const close = document.getElementById('closeBtn');
-  btn.style.display = 'none';
-  close.style.display = 'none';
+  btn.style.visibility = 'hidden';
+  close.style.visibility = 'hidden';
+
   html2canvas(document.getElementById('characterBox')).then(canvas => {
     const link = document.createElement('a');
     link.download = 'character_chart.png';
     link.href = canvas.toDataURL();
     link.click();
-    btn.style.display = '';
-    close.style.display = '';
+    btn.style.visibility = 'visible';
+    close.style.visibility = 'visible';
   });
 });
 
 /* === Image Upload === */
-document.getElementById('imgInput').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    document.getElementById('uploadedImg').src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-});
+document.get
