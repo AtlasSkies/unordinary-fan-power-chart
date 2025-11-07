@@ -5,6 +5,8 @@ let chartColor = '#92dfec';
 // Pre-defined center coordinates for the main chart based on its container size (450x450 max)
 const CHART1_CENTER = { x: 225, y: 225 }; 
 const CHART_SCALE_FACTOR = 0.8;
+// New multiplier for the Character Chart (Chart 2) container size
+const CHART_SIZE_MULTIPLIER = 1.5; 
 
 function hexToRGBA(hex, alpha) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -275,9 +277,11 @@ viewBtn.addEventListener('click', () => {
     const imgHeight = img.offsetHeight; 
     const textHeight = textBox.offsetHeight;
     
-    // Calculation to make chart roughly span image height + text box height (for sizing requested)
+    // Calculate required size for alignment (Image Height + Text Box Height)
     const targetVerticalSpan = imgHeight + textHeight; 
-    const targetSize = targetVerticalSpan;
+    
+    // APPLY 1.5x MULTIPLIER to the calculated span
+    const targetSize = targetVerticalSpan * CHART_SIZE_MULTIPLIER;
 
     // Apply the calculated size to the chart container
     overlayChart.style.height = `${targetSize}px`;
@@ -287,7 +291,7 @@ viewBtn.addEventListener('click', () => {
     
     // Initialize or resize Chart 2
     if (!radar2Ready) {
-      // Initialize Chart 2: Cap at 10, no points, with background, dynamic center
+      // Pass the new targetSize/2 for the center coordinates
       radar2 = makeRadar(ctx2, 10, false, true, { x: targetSize / 2, y: targetSize / 2 });
       radar2Ready = true;
     } else {
@@ -318,12 +322,14 @@ downloadBtn.addEventListener('click', () => {
   downloadBtn.style.visibility = 'hidden';
   closeBtn.style.visibility = 'hidden';
   
+  // Use html2canvas to capture the characterBox
   html2canvas(characterBox, { scale: 2 }).then(canvas => {
     const link = document.createElement('a');
     link.download = (nameInput.value || 'UnOrdinary_Character') + '_chart.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
     
+    // Restore buttons after download
     downloadBtn.style.visibility = 'visible';
     closeBtn.style.visibility = 'visible';
   });
