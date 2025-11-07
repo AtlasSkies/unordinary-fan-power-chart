@@ -114,6 +114,7 @@ button {
   display: flex;
   align-items: center;
   gap: 20px;
+  overflow: hidden; /* ensures content fits */
 }
 
 .close-btn {
@@ -142,14 +143,15 @@ button {
 
 .text-box {
   position: absolute;
-  bottom: -50px; /* overlap ~1/5 of image */
-  width: 60%;
+  bottom: -35px; /* fits inside, overlaps lightly */
+  width: 80%;    /* 1/10 wider on each side */
   background: white;
   border: 3px solid #493e3b;
   padding: 8px;
   font-family: Candara;
   text-align: center;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border-radius: 5px;
 }
 
 .overlay-chart {
@@ -158,6 +160,9 @@ button {
   align-items: center;
   width: 60%;
   height: 60%;
+  border: 3px solid #184046; /* border for Chart 2 area */
+  border-radius: 10px;
+  background: radial-gradient(circle at center, #f8fcff 0%, #92dfec 25%, #92dfec 100%);
 }
 
 #downloadBtn {
