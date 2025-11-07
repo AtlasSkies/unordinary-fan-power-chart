@@ -1,4 +1,4 @@
-  /* ===== General Layout ===== */
+/* ===== General Layout ===== */
   body {
     font-family: Candara, sans-serif;
     background: #f0f8fc;
@@ -20,11 +20,27 @@
     position: relative;
   }
 
+  /* NEW: Container for H1 and Subtitle */
+  .title-block { 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
   h1 {
     text-align: center;
     font-style: italic;
     color: #333;
     margin: 0;
+  }
+  
+  /* NEW: Style for the italic subtitle */
+  .subtitle { 
+    font-style: italic;
+    font-size: 14px;
+    color: #666; 
+    margin-top: -5px; 
+    margin-bottom: 5px;
   }
 
   .info-container {
