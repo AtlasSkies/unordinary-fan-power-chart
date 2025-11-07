@@ -5,7 +5,7 @@ let chartColor = '#92dfec';
 // Center + size adjustments
 const CHART2_CENTER_DX = 0;
 const CHART2_CENTER_DY = 12;
-const CHART_SCALE_FACTOR = 0.85; // shrink chart to 85% of its full radius
+const CHART_SCALE_FACTOR = 0.80; // shrink chart more to ensure labels fit
 
 function hexToRGBA(hex, alpha) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -14,7 +14,7 @@ function hexToRGBA(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-/* === Fix radar scale center === */
+/* === Fix radar scale center and radius === */
 const fixedCenterPlugin = {
   id: 'fixedCenter',
   afterLayout(chart) {
@@ -23,8 +23,7 @@ const fixedCenterPlugin = {
     const r = chart.scales.r;
     r.xCenter += (opt.dx ?? 0);
     r.yCenter += (opt.dy ?? 0);
-    // shrink radius to avoid clipping text
-    r.drawingArea *= CHART_SCALE_FACTOR;
+    r.drawingArea *= CHART_SCALE_FACTOR;  // shrink radius to avoid cutoff
   }
 };
 
@@ -89,7 +88,8 @@ const outlinedLabelsPlugin = {
     const cx = r.xCenter;
     const cy = r.yCenter;
 
-    const radius = r.drawingArea + Math.max(35, r.drawingArea * 0.15);
+    // Place labels comfortably away from the pentagon
+    const radius = r.drawingArea + Math.max(40, r.drawingArea * 0.18);
     const base = -Math.PI / 2;
 
     ctx.save();
@@ -104,7 +104,7 @@ const outlinedLabelsPlugin = {
       const angle = base + (i * 2 * Math.PI / labels.length);
       const x = cx + radius * Math.cos(angle);
       const y = cy + radius * Math.sin(angle);
-      const yAdjusted = y + (Math.sin(angle) > 0.8 ? 10 : 0);
+      const yAdjusted = y + (Math.sin(angle) > 0.8 ? 10 : 0); // small bottom nudge
       ctx.strokeText(label, x, yAdjusted);
       ctx.fillText(label, x, yAdjusted);
     });
@@ -112,7 +112,7 @@ const outlinedLabelsPlugin = {
   }
 };
 
-/* === Create Chart === */
+/* === Chart factory === */
 function makeRadar(ctx, maxCap = null, showPoints = true, withBackground = false, fixed = false) {
   return new Chart(ctx, {
     type: 'radar',
@@ -129,6 +129,10 @@ function makeRadar(ctx, maxCap = null, showPoints = true, withBackground = false
       }]
     },
     options: {
+      // Extra canvas margin so labels never clip at edges
+      layout: {
+        padding: { top: 60, right: 60, bottom: 70, left: 60 }
+      },
       scales: {
         r: {
           grid: { display: false },
@@ -156,8 +160,18 @@ window.addEventListener('load', () => {
   radar1 = makeRadar(ctx1, null, true, false, false);
 });
 
-/* === Update Charts === */
+/* === Update charts === */
 document.getElementById('updateBtn').addEventListener('click', () => {
+  const nameInput = document.getElementById('nameInput');
+  const abilityInput = document.getElementById('abilityInput');
+  const levelInput = document.getElementById('levelInput');
+  const powerInput = document.getElementById('powerInput');
+  const speedInput = document.getElementById('speedInput');
+  const trickInput = document.getElementById('trickInput');
+  const recoveryInput = document.getElementById('recoveryInput');
+  const defenseInput = document.getElementById('defenseInput');
+  const colorPicker = document.getElementById('colorPicker');
+
   const vals = [
     parseFloat(powerInput.value) || 0,
     parseFloat(speedInput.value) || 0,
@@ -186,15 +200,19 @@ document.getElementById('updateBtn').addEventListener('click', () => {
   document.getElementById('dispLevel').textContent = levelInput.value || '-';
 });
 
-/* === Overlay Controls === */
+/* === Overlay controls === */
 const overlay = document.getElementById('overlay');
 const viewBtn = document.getElementById('viewBtn');
 const closeBtn = document.getElementById('closeBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 
 viewBtn.addEventListener('click', () => {
+  const nameInput = document.getElementById('nameInput');
+  const abilityInput = document.getElementById('abilityInput');
+  const levelInput = document.getElementById('levelInput');
+
   overlay.classList.remove('hidden');
-  document.getElementById('overlayImg').src = document.getElementById('uploadedImg').src;
+  document.getElementById('overlayImg').src = document.getElementById('uploadedImg').src || '';
   document.getElementById('overlayName').textContent = nameInput.value || '-';
   document.getElementById('overlayAbility').textContent = abilityInput.value || '-';
   document.getElementById('overlayLevel').textContent = levelInput.value || '-';
@@ -205,6 +223,12 @@ viewBtn.addEventListener('click', () => {
       radar2 = makeRadar(ctx2, 10, false, true, true);
       radar2Ready = true;
     } else radar2.resize();
+
+    const powerInput = document.getElementById('powerInput');
+    const speedInput = document.getElementById('speedInput');
+    const trickInput = document.getElementById('trickInput');
+    const recoveryInput = document.getElementById('recoveryInput');
+    const defenseInput = document.getElementById('defenseInput');
 
     const vals = [
       parseFloat(powerInput.value) || 0,
