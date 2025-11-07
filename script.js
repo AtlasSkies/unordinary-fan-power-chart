@@ -2,8 +2,10 @@ let radar1, radar2;
 let radar2Ready = false;
 let chartColor = '#92dfec';
 
+// Center + size adjustments
 const CHART2_CENTER_DX = 0;
 const CHART2_CENTER_DY = 12;
+const CHART_SCALE_FACTOR = 0.85; // shrink chart to 85% of its full radius
 
 function hexToRGBA(hex, alpha) {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -12,7 +14,7 @@ function hexToRGBA(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-/* === Center Fix === */
+/* === Fix radar scale center === */
 const fixedCenterPlugin = {
   id: 'fixedCenter',
   afterLayout(chart) {
@@ -21,10 +23,12 @@ const fixedCenterPlugin = {
     const r = chart.scales.r;
     r.xCenter += (opt.dx ?? 0);
     r.yCenter += (opt.dy ?? 0);
+    // shrink radius to avoid clipping text
+    r.drawingArea *= CHART_SCALE_FACTOR;
   }
 };
 
-/* === Pentagon + Spokes === */
+/* === Pentagon background + spokes === */
 const radarBackgroundPlugin = {
   id: 'customPentagonBackground',
   beforeDraw(chart) {
@@ -85,7 +89,7 @@ const outlinedLabelsPlugin = {
     const cx = r.xCenter;
     const cy = r.yCenter;
 
-    const radius = r.drawingArea + Math.max(30, r.drawingArea * 0.12);
+    const radius = r.drawingArea + Math.max(35, r.drawingArea * 0.15);
     const base = -Math.PI / 2;
 
     ctx.save();
@@ -152,7 +156,7 @@ window.addEventListener('load', () => {
   radar1 = makeRadar(ctx1, null, true, false, false);
 });
 
-/* === Update Data === */
+/* === Update Charts === */
 document.getElementById('updateBtn').addEventListener('click', () => {
   const vals = [
     parseFloat(powerInput.value) || 0,
@@ -229,7 +233,7 @@ downloadBtn.addEventListener('click', () => {
     link.download = 'character_chart.png';
     link.href = canvas.toDataURL();
     link.click();
-    btn.style.display = ''; // restore after capture
+    btn.style.display = ''; // restore button
   });
 });
 
