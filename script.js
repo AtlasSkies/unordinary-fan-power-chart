@@ -1,19 +1,19 @@
-let chartColor = '#92dfec';
 let radar1, radar2;
 let radar2Ready = false;
+let chartColor = '#92dfec';
 
-// Safer references so "name" doesn't collide with window.name
-const nameInput     = document.getElementById('name');
-const abilityInput  = document.getElementById('ability');
-const levelInput    = document.getElementById('level');
-const powerInput    = document.getElementById('power');
-const speedInput    = document.getElementById('speed');
-const trickInput    = document.getElementById('trick');
-const recoveryInput = document.getElementById('recovery');
-const defenseInput  = document.getElementById('defense');
-const colorPicker   = document.getElementById('colorPicker');
+// Shortcuts for input fields
+const nameInput = document.getElementById('nameInput');
+const abilityInput = document.getElementById('abilityInput');
+const levelInput = document.getElementById('levelInput');
+const powerInput = document.getElementById('powerInput');
+const speedInput = document.getElementById('speedInput');
+const trickInput = document.getElementById('trickInput');
+const recoveryInput = document.getElementById('recoveryInput');
+const defenseInput = document.getElementById('defenseInput');
+const colorPicker = document.getElementById('colorPicker');
 
-// Helper to build a radar chart
+// ===== Chart.js helper =====
 function makeRadar(ctx, maxCap = null, showPoints = true) {
   return new Chart(ctx, {
     type: 'radar',
@@ -44,19 +44,18 @@ function makeRadar(ctx, maxCap = null, showPoints = true) {
         }
       },
       plugins: { legend: { display: false } },
-      animation: { duration: 500 },
+      animation: { duration: 400 },
       responsive: true,
       maintainAspectRatio: false
     }
   });
 }
 
-// Init chart 1
+// ===== Init =====
 window.addEventListener('load', () => {
   radar1 = makeRadar(document.getElementById('radarChart1'));
 });
 
-// HEX → RGBA
 function hexToRGBA(hex, alpha) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -64,7 +63,7 @@ function hexToRGBA(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-// Update stats + chart1 (+ chart2 if open)
+// ===== Update main chart =====
 document.getElementById('updateBtn').addEventListener('click', () => {
   const vals = [
     parseFloat(powerInput.value) || 0,
@@ -74,56 +73,53 @@ document.getElementById('updateBtn').addEventListener('click', () => {
     parseFloat(defenseInput.value) || 0
   ];
   const capped = vals.map(v => Math.min(v, 10));
-  const color = colorPicker.value;
-  chartColor = color;
+  chartColor = colorPicker.value;
 
-  // Chart 1 update
+  // Chart 1
   radar1.data.datasets[0].data = vals;
-  radar1.data.datasets[0].borderColor = color;
-  radar1.data.datasets[0].backgroundColor = hexToRGBA(color, 0.75);
-  radar1.data.datasets[0].pointBorderColor = color;
-  radar1.options.scales.r.pointLabels.color = color;
+  radar1.data.datasets[0].borderColor = chartColor;
+  radar1.data.datasets[0].backgroundColor = hexToRGBA(chartColor, 0.75);
+  radar1.data.datasets[0].pointBorderColor = chartColor;
+  radar1.options.scales.r.pointLabels.color = chartColor;
   radar1.update();
 
-  // Chart 2 live update (if open)
+  // Chart 2 (if ready)
   if (radar2Ready) {
     radar2.data.datasets[0].data = capped;
-    radar2.data.datasets[0].borderColor = color;
-    radar2.data.datasets[0].backgroundColor = hexToRGBA(color, 0.75);
-    radar2.options.scales.r.pointLabels.color = color;
+    radar2.data.datasets[0].borderColor = chartColor;
+    radar2.data.datasets[0].backgroundColor = hexToRGBA(chartColor, 0.75);
+    radar2.options.scales.r.pointLabels.color = chartColor;
     radar2.update();
   }
 
-  // Update info boxes
-  document.getElementById('dispName').textContent    = nameInput.value    || '-';
+  // Update side info
+  document.getElementById('dispName').textContent = nameInput.value || '-';
   document.getElementById('dispAbility').textContent = abilityInput.value || '-';
-  document.getElementById('dispLevel').textContent   = levelInput.value   || '-';
+  document.getElementById('dispLevel').textContent = levelInput.value || '-';
 });
 
-// Overlay elements
-const overlay     = document.getElementById('overlay');
-const viewBtn     = document.getElementById('viewBtn');
-const closeBtn    = document.getElementById('closeBtn');
+// ===== Overlay Logic =====
+const overlay = document.getElementById('overlay');
+const viewBtn = document.getElementById('viewBtn');
+const closeBtn = document.getElementById('closeBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 
-// Open overlay
 viewBtn.addEventListener('click', () => {
   overlay.classList.remove('hidden');
 
-  // Copy info immediately
-  document.getElementById('overlayImg').src        = document.getElementById('uploadedImg').src;
-  document.getElementById('overlayName').textContent    = nameInput.value    || '-';
+  // Copy info
+  document.getElementById('overlayImg').src = document.getElementById('uploadedImg').src;
+  document.getElementById('overlayName').textContent = nameInput.value || '-';
   document.getElementById('overlayAbility').textContent = abilityInput.value || '-';
-  document.getElementById('overlayLevel').textContent   = levelInput.value   || '-';
+  document.getElementById('overlayLevel').textContent = levelInput.value || '-';
 
-  // Wait for overlay to render fully, then create / resize chart2
+  // Create chart 2 after overlay is visible
   setTimeout(() => {
-    const ctx2 = document.getElementById('radarChart2');
     if (!radar2Ready) {
-      radar2 = makeRadar(ctx2, 10, false);
+      radar2 = makeRadar(document.getElementById('radarChart2'), 10, false);
       radar2Ready = true;
     } else {
-      radar2.resize(); // ensure proper dimensions after display
+      radar2.resize();
     }
 
     const vals = [
@@ -134,19 +130,17 @@ viewBtn.addEventListener('click', () => {
       parseFloat(defenseInput.value) || 0
     ].map(v => Math.min(v, 10));
 
-    const color = colorPicker.value;
     radar2.data.datasets[0].data = vals;
-    radar2.data.datasets[0].borderColor = color;
-    radar2.data.datasets[0].backgroundColor = hexToRGBA(color, 0.75);
-    radar2.options.scales.r.pointLabels.color = color;
+    radar2.data.datasets[0].borderColor = chartColor;
+    radar2.data.datasets[0].backgroundColor = hexToRGBA(chartColor, 0.75);
+    radar2.options.scales.r.pointLabels.color = chartColor;
     radar2.update();
-  }, 150);
+  }, 100);
 });
 
-// Close overlay
 closeBtn.addEventListener('click', () => overlay.classList.add('hidden'));
 
-// Download character box as PNG
+// ===== Download Character Box =====
 downloadBtn.addEventListener('click', () => {
   html2canvas(document.getElementById('characterBox')).then(canvas => {
     const link = document.createElement('a');
@@ -156,7 +150,7 @@ downloadBtn.addEventListener('click', () => {
   });
 });
 
-// Image upload
+// ===== Image Upload =====
 document.getElementById('imgInput').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
