@@ -89,8 +89,8 @@ button {
   position: relative;
   width: 450px;
   height: 450px;
-  border: 3px solid #184046;
   border-radius: 10px;
+  border: 3px solid #184046;
   background: radial-gradient(circle at center, #f8fcff 0%, #92dfec 25%, #92dfec 100%);
 }
 
@@ -105,26 +105,28 @@ button {
   align-items: center;
   z-index: 10;
 }
+
 .hidden { display: none; }
 
 .character-box {
   background: #fff;
-  padding: 20px;
-  border: 3px solid #493e3b;
-  border-radius: 10px;
+  width: 85vw;
+  height: 80vh;
+  border-radius: 15px;
   position: relative;
   color: #000;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 40px;
   overflow: hidden;
+  padding: 20px;
 }
 
 .close-btn {
   position: absolute;
   top: 8px;
   right: 12px;
-  font-size: 24px;
+  font-size: 28px;
   background: none;
   border: none;
   cursor: pointer;
@@ -138,19 +140,19 @@ button {
 }
 
 .overlay-img {
-  width: 250px;
-  height: 250px;
+  width: 300px;
+  height: 300px;
   object-fit: cover;
   border: 3px solid #493e3b;
 }
 
 .text-box {
   position: absolute;
-  bottom: -35px;
+  bottom: -40px;
   width: 80%;
   background: white;
   border: 3px solid #493e3b;
-  padding: 8px;
+  padding: 10px;
   font-family: Candara;
   text-align: center;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -161,11 +163,11 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 60%;
-  height: 60%;
-  border: 3px solid #184046;
+  width: 55%;
+  height: 70%;
   border-radius: 10px;
   background: radial-gradient(circle at center, #f8fcff 0%, #92dfec 25%, #92dfec 100%);
+  border: 3px solid #184046;
 }
 
 #downloadBtn {
