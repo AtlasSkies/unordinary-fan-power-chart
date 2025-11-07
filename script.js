@@ -2,7 +2,6 @@ let radar1, radar2;
 let radar2Ready = false;
 let chartColor = '#92dfec';
 
-// Inputs
 const nameInput = document.getElementById('nameInput');
 const abilityInput = document.getElementById('abilityInput');
 const levelInput = document.getElementById('levelInput');
@@ -13,7 +12,7 @@ const recoveryInput = document.getElementById('recoveryInput');
 const defenseInput = document.getElementById('defenseInput');
 const colorPicker = document.getElementById('colorPicker');
 
-// Create a radar chart
+// Chart.js creation helper
 function makeRadar(ctx, maxCap = null, showPoints = true) {
   const gradient = ctx.createRadialGradient(
     ctx.canvas.width / 2,
@@ -63,9 +62,10 @@ function makeRadar(ctx, maxCap = null, showPoints = true) {
   });
 }
 
-// Init Chart 1
+// Initialize main chart
 window.addEventListener('load', () => {
-  radar1 = makeRadar(document.getElementById('radarChart1'));
+  const ctx1 = document.getElementById('radarChart1').getContext('2d');
+  radar1 = makeRadar(ctx1);
 });
 
 function hexToRGBA(hex, alpha) {
@@ -75,7 +75,7 @@ function hexToRGBA(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-// Update both charts
+// Update button
 document.getElementById('updateBtn').addEventListener('click', () => {
   const vals = [
     parseFloat(powerInput.value) || 0,
@@ -87,12 +87,14 @@ document.getElementById('updateBtn').addEventListener('click', () => {
   const capped = vals.map(v => Math.min(v, 10));
   chartColor = colorPicker.value;
 
+  // Update Chart 1
   radar1.data.datasets[0].data = vals;
   radar1.data.datasets[0].borderColor = chartColor;
   radar1.data.datasets[0].pointBorderColor = chartColor;
   radar1.options.scales.r.pointLabels.color = chartColor;
   radar1.update();
 
+  // Update Chart 2 if it exists
   if (radar2Ready) {
     radar2.data.datasets[0].data = capped;
     radar2.data.datasets[0].borderColor = chartColor;
@@ -106,7 +108,7 @@ document.getElementById('updateBtn').addEventListener('click', () => {
   document.getElementById('dispLevel').textContent = levelInput.value || '-';
 });
 
-// Overlay logic
+// Overlay controls
 const overlay = document.getElementById('overlay');
 const viewBtn = document.getElementById('viewBtn');
 const closeBtn = document.getElementById('closeBtn');
@@ -115,11 +117,13 @@ const downloadBtn = document.getElementById('downloadBtn');
 viewBtn.addEventListener('click', () => {
   overlay.classList.remove('hidden');
 
+  // Copy info
   document.getElementById('overlayImg').src = document.getElementById('uploadedImg').src;
   document.getElementById('overlayName').textContent = nameInput.value || '-';
   document.getElementById('overlayAbility').textContent = abilityInput.value || '-';
   document.getElementById('overlayLevel').textContent = levelInput.value || '-';
 
+  // Create Chart 2 once overlay is visible
   setTimeout(() => {
     const ctx2 = document.getElementById('radarChart2').getContext('2d');
     if (!radar2Ready) {
@@ -140,12 +144,12 @@ viewBtn.addEventListener('click', () => {
     radar2.data.datasets[0].pointBorderColor = chartColor;
     radar2.options.scales.r.pointLabels.color = chartColor;
     radar2.update();
-  }, 100);
+  }, 200);
 });
 
 closeBtn.addEventListener('click', () => overlay.classList.add('hidden'));
 
-// Download PNG
+// Download Character Box
 downloadBtn.addEventListener('click', () => {
   html2canvas(document.getElementById('characterBox')).then(canvas => {
     const link = document.createElement('a');
