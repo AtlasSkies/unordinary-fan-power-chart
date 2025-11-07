@@ -2,9 +2,10 @@ let radar1, radar2;
 let radar2Ready = false;
 let chartColor = '#92dfec';
 
+// scale so chart ≈75% of original
 const CHART2_CENTER_DX = 0;
-const CHART2_CENTER_DY = 12;
-const CHART_SCALE_FACTOR = 0.8;
+const CHART2_CENTER_DY = 0;
+const CHART_SCALE_FACTOR = 0.93;
 
 /* === Helper === */
 function hexToRGBA(hex, alpha) {
@@ -77,7 +78,7 @@ const radarBackgroundPlugin = {
   }
 };
 
-/* === Outlined Axis Labels (No Cutoff + unclipped) === */
+/* === Outlined Axis Labels === */
 const outlinedLabelsPlugin = {
   id: 'outlinedLabels',
   afterDraw(chart) {
@@ -87,7 +88,7 @@ const outlinedLabelsPlugin = {
     const labels = chart.data.labels;
     const cx = r.xCenter;
     const cy = r.yCenter;
-    const radius = r.drawingArea + Math.max(50, r.drawingArea * 0.22);
+    const radius = r.drawingArea + 60;
     const base = -Math.PI / 2;
 
     ctx.save();
@@ -107,16 +108,15 @@ const outlinedLabelsPlugin = {
       const angle = base + (i * 2 * Math.PI / labels.length);
       const x = cx + radius * Math.cos(angle);
       const y = cy + radius * Math.sin(angle);
-      const yAdjusted = y + (Math.sin(angle) > 0.8 ? 10 : 0);
-      ctx.strokeText(labels[i], x, yAdjusted);
-      ctx.fillText(labels[i], x, yAdjusted);
+      ctx.strokeText(labels[i], x, y);
+      ctx.fillText(labels[i], x, y);
     }
 
     ctx.restore();
   }
 };
 
-/* === Create Radar Chart === */
+/* === Chart Factory === */
 function makeRadar(ctx, maxCap = null, showPoints = true, withBackground = false, fixed = false) {
   return new Chart(ctx, {
     type: 'radar',
@@ -135,9 +135,7 @@ function makeRadar(ctx, maxCap = null, showPoints = true, withBackground = false
     options: {
       responsive: false,
       maintainAspectRatio: false,
-      layout: {
-        padding: { top: 100, right: 100, bottom: 120, left: 100 }
-      },
+      layout: { padding: { top: 80, right: 80, bottom: 80, left: 80 } },
       scales: {
         r: {
           grid: { display: false },
@@ -157,13 +155,13 @@ function makeRadar(ctx, maxCap = null, showPoints = true, withBackground = false
   });
 }
 
-/* === Chart 1 (main) === */
+/* === Chart 1 === */
 window.addEventListener('load', () => {
   const ctx1 = document.getElementById('radarChart1').getContext('2d');
   radar1 = makeRadar(ctx1, null, true, false, false);
 });
 
-/* === Update Chart === */
+/* === Update === */
 document.getElementById('updateBtn').addEventListener('click', () => {
   const vals = [
     parseFloat(powerInput.value) || 0,
@@ -193,60 +191,8 @@ document.getElementById('updateBtn').addEventListener('click', () => {
   document.getElementById('dispLevel').textContent = levelInput.value || '-';
 });
 
-/* === Overlay Controls === */
+/* === Overlay === */
 const overlay = document.getElementById('overlay');
 const viewBtn = document.getElementById('viewBtn');
 const closeBtn = document.getElementById('closeBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-
-viewBtn.addEventListener('click', () => {
-  overlay.classList.remove('hidden');
-  document.getElementById('overlayImg').src = document.getElementById('uploadedImg').src;
-  document.getElementById('overlayName').textContent = nameInput.value || '-';
-  document.getElementById('overlayAbility').textContent = abilityInput.value || '-';
-  document.getElementById('overlayLevel').textContent = levelInput.value || '-';
-
-  setTimeout(() => {
-    const ctx2 = document.getElementById('radarChart2').getContext('2d');
-    if (!radar2Ready) {
-      radar2 = makeRadar(ctx2, 10, false, true, true);
-      radar2Ready = true;
-    } else radar2.resize();
-
-    const vals = [
-      parseFloat(powerInput.value) || 0,
-      parseFloat(speedInput.value) || 0,
-      parseFloat(trickInput.value) || 0,
-      parseFloat(recoveryInput.value) || 0,
-      parseFloat(defenseInput.value) || 0
-    ].map(v => Math.min(v, 10));
-
-    const fill = hexToRGBA(chartColor, 0.75);
-    radar2.data.datasets[0].data = vals;
-    radar2.data.datasets[0].borderColor = chartColor;
-    radar2.data.datasets[0].backgroundColor = fill;
-    radar2.update();
-  }, 150);
-});
-
-closeBtn.addEventListener('click', () => overlay.classList.add('hidden'));
-
-/* === Download (hides buttons temporarily) === */
-downloadBtn.addEventListener('click', () => {
-  const btn = document.getElementById('downloadBtn');
-  const close = document.getElementById('closeBtn');
-  btn.style.visibility = 'hidden';
-  close.style.visibility = 'hidden';
-
-  html2canvas(document.getElementById('characterBox')).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'character_chart.png';
-    link.href = canvas.toDataURL();
-    link.click();
-    btn.style.visibility = 'visible';
-    close.style.visibility = 'visible';
-  });
-});
-
-/* === Image Upload === */
-document.get
+const downloadBtn = document.get
