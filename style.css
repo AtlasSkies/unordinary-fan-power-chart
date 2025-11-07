@@ -89,7 +89,7 @@ button {
   position: relative;
   width: 450px;
   height: 450px;
-  background: none; /* no background for Chart 1 */
+  background: none; /* Chart 1: transparent */
 }
 
 /* Overlay */
@@ -108,7 +108,7 @@ button {
 
 .character-box {
   background: #fff;
-  width: 64vw; /* 25% less wide */
+  width: 64vw; /* 25% narrower */
   height: 80vh;
   border-radius: 15px;
   position: relative;
@@ -116,7 +116,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: calc(300px * 0.4); /* image width * 2/5 */
+  gap: calc(300px * 0.4);
   overflow: hidden;
   padding: 20px;
   border: none;
