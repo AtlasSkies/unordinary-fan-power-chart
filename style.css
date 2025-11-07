@@ -56,8 +56,8 @@ h1 {
   padding: 10px;
   position: absolute;
   z-index: 100;
-  /* FIXED: Adjusted position to prevent clipping at the top */
-  bottom: 115%; 
+  /* FIX: Now uses 'top' to appear below the icon */
+  top: 115%; 
   left: 50%;
   transform: translateX(-50%);
   opacity: 0;
