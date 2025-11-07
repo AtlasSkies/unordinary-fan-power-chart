@@ -20,14 +20,14 @@
         <b>Level:</b> <span id="dispLevel">-</span>
       </div>
       <div class="inputs">
-        <label>Name: <input type="text" id="name"></label>
-        <label>Ability: <input type="text" id="ability"></label>
-        <label>Level: <input type="text" id="level"></label>
-        <label>Power: <input type="number" id="power" step="0.1" min="0"></label>
-        <label>Speed: <input type="number" id="speed" step="0.1" min="0"></label>
-        <label>Trick: <input type="number" id="trick" step="0.1" min="0"></label>
-        <label>Recovery: <input type="number" id="recovery" step="0.1" min="0"></label>
-        <label>Defense: <input type="number" id="defense" step="0.1" min="0"></label>
+        <label>Name: <input type="text" id="nameInput"></label>
+        <label>Ability: <input type="text" id="abilityInput"></label>
+        <label>Level: <input type="text" id="levelInput"></label>
+        <label>Power: <input type="number" id="powerInput" step="0.1" min="0"></label>
+        <label>Speed: <input type="number" id="speedInput" step="0.1" min="0"></label>
+        <label>Trick: <input type="number" id="trickInput" step="0.1" min="0"></label>
+        <label>Recovery: <input type="number" id="recoveryInput" step="0.1" min="0"></label>
+        <label>Defense: <input type="number" id="defenseInput" step="0.1" min="0"></label>
         <label>Ability Color: <input type="color" id="colorPicker" value="#92dfec"></label>
         <button id="updateBtn">Update Chart</button>
         <button id="viewBtn">View Character Chart</button>
@@ -39,7 +39,7 @@
     </div>
   </div>
 
-  <!-- Overlay modal -->
+  <!-- Overlay -->
   <div id="overlay" class="overlay hidden">
     <div id="characterBox" class="character-box">
       <button id="closeBtn" class="close-btn">×</button>
