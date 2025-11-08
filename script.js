@@ -20,6 +20,10 @@ const outlinedLabelsPlugin = {
       const labels = chart.data.labels;
       const cx = r.xCenter;
       const cy = r.yCenter;
+      
+      // Get the current stat values for Chart 1
+      const isMainChart = chart.canvas.id === 'radarChart1';
+      const statValues = isMainChart ? getStatValues() : [];
 
       const baseRadius = r.drawingArea * 1.1 + 10;
       const base = -Math.PI / 2;
@@ -44,9 +48,16 @@ const outlinedLabelsPlugin = {
 
         const x = cx + baseRadius * Math.cos(angle);
         const y = cy + baseRadius * Math.sin(angle);
+        
+        // FIX: Append stat value for the main chart
+        let displayLabel = label;
+        if (isMainChart) {
+             const stat = statValues[i];
+             displayLabel += ` (${stat})`;
+        }
 
-        ctx.strokeText(label, x, y);
-        ctx.fillText(label, x, y);
+        ctx.strokeText(displayLabel, x, y);
+        ctx.fillText(displayLabel, x, y);
       });
       ctx.restore();
     }
@@ -228,7 +239,6 @@ viewBtn.addEventListener('click', () => {
   document.getElementById('overlayAbility').textContent = document.getElementById('abilityInput').value || '-';
   document.getElementById('overlayLevel').textContent = document.getElementById('levelInput').value || '-';
   
-  // FIX: Watermark text set to "AS"
   document.getElementById('textWatermark').textContent = 'AS';
   
   const ctx2 = document.getElementById('radarChart2').getContext('2d');
