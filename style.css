@@ -1,3 +1,4 @@
+/* ===== Global ===== */
 body {
   font-family: Candara, sans-serif;
   background: #f0f8fc;
@@ -21,16 +22,18 @@ h1 {
   margin-bottom: 15px;
 }
 
+/* ===== Layout Container ===== */
 .container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: center; /* vertically align */
+  align-items: center; /* vertical centering for chart + inputs */
   gap: 30px;
   max-width: 1200px;
   width: 100%;
 }
 
+/* ===== Left Panel ===== */
 .left {
   display: flex;
   flex-direction: column;
@@ -38,25 +41,37 @@ h1 {
   gap: 15px;
 }
 
+/* ===== Image Upload ===== */
 .upload-img {
   width: clamp(180px, 25vw, 250px);
   height: clamp(180px, 25vw, 250px);
   border: 2px dashed #aaa;
   border-radius: 10px;
   object-fit: cover;
+  background-color: #fff;
 }
 
+/* ===== Info Box for Name/Ability/Level ===== */
 .info-inputs-box {
   background-color: white;
   border-radius: 8px;
   padding: 10px 15px;
   width: clamp(180px, 25vw, 250px);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+.info-inputs-box label {
+  display: flex;
+  justify-content: space-between;
+  font-style: normal;
+  font-weight: bold;
+  color: #000;
+}
+
+/* ===== Stat Inputs ===== */
 .inputs {
   display: flex;
   flex-direction: column;
@@ -71,7 +86,13 @@ label {
   font-style: normal;
 }
 
-input[type="number"], input[type="text"] {
+.inputs label i {
+  font-style: italic;
+  font-weight: normal;
+}
+
+input[type="number"],
+input[type="text"] {
   width: 110px;
   border-radius: 4px;
   border: 1px solid #ccc;
@@ -84,8 +105,10 @@ input[type="color"] {
   height: 35px;
   border: none;
   cursor: pointer;
+  background: none;
 }
 
+/* ===== Buttons ===== */
 button {
   padding: 6px 12px;
   background-color: #92dfec;
@@ -94,6 +117,7 @@ button {
   cursor: pointer;
   transition: all 0.2s;
   font-family: Candara;
+  font-weight: normal;
 }
 
 button:hover {
@@ -101,23 +125,36 @@ button:hover {
   color: white;
 }
 
+/* ===== Main Radar Chart Area ===== */
 .chart-area {
-  width: clamp(240px, 35vw, 450px);
-  height: clamp(240px, 35vw, 450px);
+  width: clamp(280px, 38vw, 500px);
+  height: clamp(280px, 38vw, 500px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px; /* expands boundary so labels/values don’t clip */
+  background: none;
 }
 
+/* ===== Overlay (Dark Background) ===== */
 .overlay {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 10;
 }
 
-.hidden { display: none; }
+.hidden {
+  display: none;
+}
 
+/* ===== Character Card ===== */
 .character-box {
   background: #fff;
   border-radius: 15px;
@@ -132,6 +169,7 @@ button:hover {
   overflow: hidden;
 }
 
+/* ===== Close Button ===== */
 .close-btn {
   position: absolute;
   top: 10px;
@@ -142,6 +180,7 @@ button:hover {
   cursor: pointer;
 }
 
+/* ===== Image Section in Overlay ===== */
 .image-section {
   display: flex;
   flex-direction: column;
@@ -149,6 +188,7 @@ button:hover {
   position: relative;
 }
 
+/* ===== Character Image ===== */
 .overlay-img {
   width: 320px;
   height: 320px;
@@ -157,36 +197,66 @@ button:hover {
   object-fit: cover;
 }
 
+/* ===== Text Box Under Image ===== */
 .text-box {
+  position: absolute;
+  bottom: -5%; /* overlaps bottom 5% of image */
+  left: 50%;
+  transform: translateX(-50%);
   background: white;
   border: 3px solid #184046;
   width: 60%;
-  font-family: Candara;
-  font-size: 18px;
-  position: absolute;
-  bottom: -5%;
-  left: 50%;
-  transform: translateX(-50%);
   text-align: center;
   padding: 8px;
+  font-family: Candara;
+  font-size: 18px;
+  color: #000;
 }
 
 .text-box b {
   font-weight: bold;
+  font-style: normal;
 }
 
+.text-box p {
+  margin: 4px 0;
+}
+
+/* ===== Overlay Radar Chart ===== */
 .overlay-chart {
   width: clamp(280px, 38vw, 450px);
   height: clamp(280px, 38vw, 450px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
+/* ===== Subtle Watermark Signature ===== */
+.subtle-signature {
+  position: absolute;
+  bottom: 5px;
+  left: 20px;
+  font-size: 8px;
+  color: rgba(0, 0, 0, 0.05);
+  user-select: none;
+}
+
+/* ===== Download Button ===== */
 #downloadBtn {
   position: absolute;
   bottom: 10px;
   right: 10px;
   background: #92dfec;
+  border: none;
   border-radius: 5px;
   padding: 6px 10px;
   cursor: pointer;
   font-family: Candara;
+  font-weight: normal;
+  transition: background-color 0.2s;
+}
+
+#downloadBtn:hover {
+  background-color: #6db5c0;
+  color: white;
 }
