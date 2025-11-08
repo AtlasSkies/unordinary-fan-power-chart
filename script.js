@@ -12,6 +12,7 @@ function hexToRGBA(hex, alpha) {
 
 // Outlined Axis Labels (Colored Outline, White Fill)
 const outlinedLabelsPlugin = {
+// ... (Logic for outlinedLabelsPlugin remains unchanged) ...
   id: 'outlinedLabels',
   afterDraw(chart) {
     if (chart.canvas.id === 'radarChart2' || chart.canvas.id === 'radarChart1') {
@@ -68,14 +69,16 @@ const radarBackgroundPlugin = {
     const N = chart.data.labels.length;
     const start = -Math.PI / 2;
 
-    // Gradient Flip: outer #f8fcff (light) → center chartColor (selected color)
+    // FIX: Gradient from light (#f8fcff) in center to dark (chartColor) on outside, hard stop at 40%
     const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
     const currentColor = window.chartColor || '#92dfec';
-
-    // Flipped gradient stops
-    gradient.addColorStop(0, currentColor);
+    
+    // Light color center
+    gradient.addColorStop(0, '#f8fcff');
+    // Quick turn to dark color at 40%
     gradient.addColorStop(0.4, currentColor);
-    gradient.addColorStop(1, '#f8fcff');
+    // Dark color remains until 100%
+    gradient.addColorStop(1, currentColor); 
 
     ctx.save();
 
@@ -107,6 +110,7 @@ const radarBackgroundPlugin = {
     ctx.restore();
   },
   afterDatasetsDraw(chart, args, options) {
+// ... (Outer border logic remains unchanged) ...
     if (chart.canvas.id !== 'radarChart2') return;
 
     const ctx = chart.ctx;
@@ -136,6 +140,7 @@ const radarBackgroundPlugin = {
 Chart.register(radarBackgroundPlugin, outlinedLabelsPlugin);
 
 function makeRadar(ctx, isOverlayChart = false) {
+// ... (makeRadar function remains unchanged) ...
   const currentColor = document.getElementById('colorPicker').value || '#92dfec';
 
   return new Chart(ctx, {
@@ -160,7 +165,6 @@ function makeRadar(ctx, isOverlayChart = false) {
           min: 0,
           max: 10,
           ticks: {
-            // FIX: Remove numbers completely from the radar axis
             display: false,
           },
           grid: { display: false },
@@ -201,6 +205,7 @@ function getStatValues() {
 
 function updateCharts() {
   const vals = getStatValues();
+// ... (updateCharts function remains unchanged) ...
   chartColor = colorPicker.value;
   const fill = hexToRGBA(chartColor, 0.75);
 
@@ -224,13 +229,12 @@ colorPicker.addEventListener('input', updateCharts);
 );
 
 viewBtn.addEventListener('click', () => {
+// ... (viewBtn click handler remains unchanged) ...
   overlay.classList.remove('hidden');
   document.getElementById('overlayImg').src = uploadedImg.src;
   document.getElementById('overlayName').textContent = document.getElementById('nameInput').value || '-';
   document.getElementById('overlayAbility').textContent = document.getElementById('abilityInput').value || '-';
   document.getElementById('overlayLevel').textContent = document.getElementById('levelInput').value || '-';
-  
-  // FIX: Watermark text should be hidden in a div within the text-box, not a separate element
   document.getElementById('textWatermark').textContent = 'Chart website by Atlas Skies';
   
   const ctx2 = document.getElementById('radarChart2').getContext('2d');
@@ -239,7 +243,6 @@ viewBtn.addEventListener('click', () => {
     radar2.destroy();
   }
 
-  // Pass true for isOverlayChart
   radar2 = makeRadar(ctx2, true);
   updateCharts();
 });
@@ -247,6 +250,7 @@ viewBtn.addEventListener('click', () => {
 closeBtn.addEventListener('click', () => overlay.classList.add('hidden'));
 
 downloadBtn.addEventListener('click', () => {
+// ... (downloadBtn click handler remains unchanged) ...
   downloadBtn.style.visibility = 'hidden';
   closeBtn.style.visibility = 'hidden';
   html2canvas(document.getElementById('characterBox'), { scale: 2 }).then(canvas => {
@@ -260,6 +264,7 @@ downloadBtn.addEventListener('click', () => {
 });
 
 imgInput.addEventListener('change', e => {
+// ... (imgInput change handler remains unchanged) ...
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
