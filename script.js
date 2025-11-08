@@ -1,164 +1,110 @@
-let radar1, radar2;
-let radar2Ready = false;
-let chartColor = '#92dfec';
+/* === Global Variables === */
+let radar1;
+let radar2;
+let chartColor = '#8080ff'; // Default ability color
+let currentStats; // Stores the current stats for chart 2
 
-// Pre-defined center coordinates for the main chart based on its container size (500x500 max)
-// Center adjusted to 250x250, then shifted 3 PIXELS LEFT (250 -> 247)
+// Chart 1 is slightly shifted left to be centered visually
 const CHART1_CENTER = { x: 247, y: 250 }; 
-const CHART_SCALE_FACTOR = 0.8;
-// Multiplier for the Character Chart (Chart 2) container size (Reduced by ~33%)
-const CHART_SIZE_MULTIPLIER = 1.0; 
+// Chart 2 is centered in its container
+const CHART2_CENTER = { x: 200, y: 200 };
 
-function hexToRGBA(hex, alpha) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
+/* === Custom Chart Plugins === */
 
-/* === Fix radar scale center and radius (to prevent clipping) === */
-const fixedCenterPlugin = {
-  id: 'fixedCenter',
-  beforeLayout(chart) {
-    const opt = chart.config.options.fixedCenter;
-    if (!opt?.enabled) return;
-    const r = chart.scales.r;
-    
-    if (opt.centerX && opt.centerY) {
-      r.xCenter = opt.centerX;
-      r.yCenter = opt.yCenter;
-    }
-    
-    r.drawingArea *= CHART_SCALE_FACTOR;
-  }
-};
-
-/* === Pentagon background + spokes (Overlay Chart) === */
+// 1. Radar Background Plugin (Rings and Spokes)
 const radarBackgroundPlugin = {
-  id: 'customPentagonBackground',
-  // Draw the background fill BEFORE the dataset
-  beforeDatasetsDraw(chart) {
-    const opts = chart.config.options.customBackground;
-    if (!opts?.enabled) return;
-    const r = chart.scales.r;
+  id: 'radarBackground',
+  beforeDraw(chart) {
     const ctx = chart.ctx;
+    const r = chart.scales.r;
     const cx = r.xCenter;
     const cy = r.yCenter;
-    const radius = r.drawingArea;
-    const N = chart.data.labels.length;
-    const start = -Math.PI / 2;
-    
-    // Radial Gradient (Fill)
-    const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-    gradient.addColorStop(0, '#f8fcff');
-    // Gradient transition moved to 33%
-    gradient.addColorStop(0.33, '#92dfec'); 
-    gradient.addColorStop(1, '#92dfec');
+    const labels = chart.data.labels;
+    const numPoints = labels.length;
     
     ctx.save();
     
-    // Draw Pentagon Shape (background fill)
-    ctx.beginPath();
-    for (let i = 0; i < N; i++) {
-      const a = start + (i * 2 * Math.PI / N);
-      const x = cx + radius * Math.cos(a);
-      const y = cy + radius * Math.sin(a);
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    // Draw Radial Gradient Background for Chart 2 only
+    if (chart.canvas.id === 'radarChart2') {
+      const gradient = ctx.createRadialGradient(
+        cx, cy, 0, 
+        cx, cy, r.drawingArea * 1.05 
+      );
+      gradient.addColorStop(0, chartColor); // Center color is ability color
+      gradient.addColorStop(0.33, chartColor); // Gradient starts here (33%)
+      gradient.addColorStop(1, 'white'); // Fades to white
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r.drawingArea * 1.05, 0, 2 * Math.PI);
+      ctx.fill();
     }
-    ctx.closePath();
-    ctx.fillStyle = gradient;
-    ctx.fill();
-    
-    ctx.restore();
-  },
-  
-  // Draw the spokes and outer border (outline) AFTER the dataset is drawn (on top of it)
-  afterDatasetsDraw(chart) {
-    const opts = chart.config.options.customBackground;
-    if (!opts?.enabled) return;
-    const r = chart.scales.r;
-    const ctx = chart.ctx;
-    const cx = r.xCenter;
-    const cy = r.yCenter;
-    const radius = r.drawingArea;
-    const N = chart.data.labels.length;
-    const start = -Math.PI / 2;
-    
-    ctx.save();
-    
-    // Draw Spokes (Color darkened as requested)
+
+    // Draw Spokes (darker lines emanating from center)
     ctx.beginPath();
-    for (let i = 0; i < N; i++) {
-      const a = start + (i * 2 * Math.PI / N);
-      const x = cx + radius * Math.cos(a);
-      const y = cy + radius * Math.sin(a);
+    ctx.strokeStyle = '#35727d'; // Darker spoke color
+    ctx.lineWidth = 2; // Spoke thickness (increased to 2)
+
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (Math.PI / 2) - (i * 2 * Math.PI / numPoints);
+      const x = cx + r.drawingArea * Math.cos(angle);
+      const y = cy - r.drawingArea * Math.sin(angle);
       ctx.moveTo(cx, cy);
       ctx.lineTo(x, y);
     }
-    // Updated spoke color to a darker teal
-    ctx.strokeStyle = '#35727d';
-    ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Draw Pentagon Outline
+    // Draw the Central Circle (white dot)
+    ctx.fillStyle = 'white';
     ctx.beginPath();
-    for (let i = 0; i < N; i++) {
-      const a = start + (i * 2 * Math.PI / N);
-      const x = cx + radius * Math.cos(a);
-      const y = cy + radius * Math.sin(a);
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.strokeStyle = '#184046';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
+    ctx.arc(cx, cy, 4, 0, 2 * Math.PI);
+    ctx.fill();
+
     ctx.restore();
   }
 };
 
-/* === Outlined Axis Labels (Prevents Cutoff & uses chartColor) === */
+// 2. Outlined Axis Labels (White Fill, Color Outline)
 const outlinedLabelsPlugin = {
   id: 'outlinedLabels',
   afterDraw(chart) {
     const ctx = chart.ctx;
     const r = chart.scales.r;
     const labels = chart.data.labels;
-    const cx = r.xCenter;
-    const cy = r.yCenter;
+    const cx = chart.options.centerPoint.x;
+    const cy = chart.options.centerPoint.y;
     
-    // Adjusted label radius (increased 15 to 25) for better spacing
-    const baseRadius = r.drawingArea * 1.05 + 25; 
+    // Adjust label radius for better positioning outside the chart area
+    const radius = r.drawingArea * 1.05 + 15; 
     const base = -Math.PI / 2;
     
+    // Custom offsets to adjust label positions (in radians)
+    const powerOffset = 0;
+    const defenseOffset = 0.04; // Moves Defense slightly left
+    const speedOffset = -0.04; // Moves Speed slightly right
+    const offsets = [powerOffset, defenseOffset, speedOffset, 0, 0];
+
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = 'italic 18px Candara';
     
-    // Outline color is the selected ability color, fill is white
+    // Corrected Color Swap: Outline is chartColor, Fill is White
     ctx.strokeStyle = chartColor; 
     ctx.fillStyle = 'white'; 
     ctx.lineWidth = 4;
 
     labels.forEach((label, i) => {
-      let radius = baseRadius;
+      // Calculate angle and apply custom offset
       let angle = base + (i * 2 * Math.PI / labels.length);
-      
-      // Fine-tune positioning for Speed and Defense labels
-      if (label === 'Defense') {
-        // Shift Defense (index 4) left (increase from 0.05 to 0.08 for further left shift)
-        const defenseOffset = 0.08; 
-        angle -= defenseOffset;
-      } else if (label === 'Speed') {
-        // Shift Speed (index 1) right 
-        const speedOffset = 0.05; 
-        angle += speedOffset;
+      if (i < offsets.length) {
+        angle += offsets[i];
       }
       
       const x = cx + radius * Math.cos(angle);
       const y = cy + radius * Math.sin(angle);
       
+      // Draw the outline first, then the fill on top
       ctx.strokeText(label, x, y);
       ctx.fillText(label, x, y);
     });
@@ -166,206 +112,181 @@ const outlinedLabelsPlugin = {
   }
 };
 
-/* === Create Chart Function === */
-function makeRadar(ctx, maxCap = null, showPoints = true, withBackground = false, fixedCenter = null) {
+/* === Utility Functions === */
+
+function getStats() {
+  return [
+    parseFloat(document.getElementById('powerInput').value),
+    parseFloat(document.getElementById('defenseInput').value),
+    parseFloat(document.getElementById('speedInput').value),
+    parseFloat(document.getElementById('recoveryInput').value),
+    parseFloat(document.getElementById('trickInput').value),
+  ];
+}
+
+function makeRadar(ctx, stats, isEditable, showLabels, centerPoint) {
+  const data = {
+    labels: ['Power', 'Defense', 'Speed', 'Recovery', 'Trick'],
+    datasets: [{
+      data: stats || [5.0, 5.0, 5.0, 5.0, 5.0], // Default center stats for Chart 1
+      backgroundColor: `rgba(128, 128, 255, 0.65)`, // 65% opacity
+      borderColor: chartColor,
+      borderWidth: 3,
+      pointRadius: isEditable ? 5 : 0,
+      pointBackgroundColor: chartColor,
+      pointBorderColor: '#fff',
+      pointBorderWidth: 2,
+    }]
+  };
+
+  const options = {
+    centerPoint: centerPoint, // Custom option for plugin positioning
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false },
+      // Apply plugins conditionally
+      radarBackground: { enabled: true },
+      outlinedLabels: { enabled: showLabels }
+    },
+    scales: {
+      r: {
+        grid: { display: false },
+        angleLines: { color: '#6db5c0', lineWidth: 2 }, // Angle line thickness (increased to 2)
+        suggestedMin: 0,
+        suggestedMax: 10,
+        ticks: {
+          display: isEditable, // Only show ticks on editable chart 1
+          stepSize: 1,
+          backdropColor: 'transparent',
+          color: '#333',
+          font: { size: 10, family: 'Candara' }
+        },
+        pointLabels: {
+          display: false // Hide default labels; handled by custom plugin
+        }
+      }
+    }
+  };
+
+  const plugins = [radarBackgroundPlugin];
+  if (showLabels) {
+    plugins.push(outlinedLabelsPlugin);
+  }
+
   return new Chart(ctx, {
     type: 'radar',
-    data: {
-      labels: ['Power', 'Speed', 'Trick', 'Recovery', 'Defense'],
-      datasets: [{
-        data: [0, 0, 0, 0, 0],
-        // Opacity updated to 0.65
-        backgroundColor: hexToRGBA(chartColor, 0.65), 
-        borderColor: chartColor, 
-        borderWidth: 2,
-        pointBackgroundColor: '#fff',
-        pointBorderColor: chartColor, 
-        pointRadius: showPoints ? 5 : 0,
-        order: 1 
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      scales: {
-        r: {
-          grid: { display: false },
-          angleLines: { color: '#6db5c0', lineWidth: 1 },
-          suggestedMin: 0,
-          suggestedMax: maxCap ?? 10, 
-          ticks: { display: false },
-          pointLabels: { 
-            display: true, 
-            font: { size: 16 },
-            color: 'transparent' 
-          } 
-        }
-      },
-      customBackground: { enabled: withBackground },
-      fixedCenter: { enabled: !!fixedCenter, centerX: fixedCenter?.x, centerY: fixedCenter?.y },
-      plugins: { legend: { display: false } }
-    },
-    plugins: [fixedCenterPlugin, radarBackgroundPlugin, outlinedLabelsPlugin]
+    data: data,
+    options: options,
+    plugins: plugins
   });
 }
 
-// Get DOM elements
-const updateBtn = document.getElementById('updateBtn');
-const viewBtn = document.getElementById('viewBtn');
-const powerInput = document.getElementById('powerInput');
-const speedInput = document.getElementById('speedInput');
-const trickInput = document.getElementById('trickInput');
-const recoveryInput = document.getElementById('recoveryInput');
-const defenseInput = document.getElementById('defenseInput');
-const colorPicker = document.getElementById('colorPicker');
-const dispName = document.getElementById('dispName');
-const dispAbility = document.getElementById('dispAbility');
-const dispLevel = document.getElementById('dispLevel');
-const nameInput = document.getElementById('nameInput');
-const abilityInput = document.getElementById('abilityInput');
-const levelInput = document.getElementById('levelInput');
-const overlay = document.getElementById('overlay');
-const overlayImg = document.getElementById('overlayImg');
-const overlayName = document.getElementById('overlayName');
-const overlayAbility = document.getElementById('overlayAbility');
-const overlayLevel = document.getElementById('overlayLevel');
-const closeBtn = document.getElementById('closeBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-const characterBox = document.getElementById('characterBox');
-const imgInput = document.getElementById('imgInput');
-const uploadedImg = document.getElementById('uploadedImg');
-// NEW: Element for the subtle signature
-const subtleSignature = document.getElementById('subtleSignature');
+function updateChart() {
+  // Update Chart 1 color and data
+  chartColor = document.getElementById('colorPicker').value;
+  currentStats = getStats();
+  
+  radar1.data.datasets[0].data = currentStats;
+  radar1.data.datasets[0].borderColor = chartColor;
+  radar1.data.datasets[0].pointBackgroundColor = chartColor;
+  radar1.data.datasets[0].backgroundColor = `${chartColor}A6`; // A6 is 65% opacity in hex
+  radar1.update();
+}
+
+function updateOverlayChart(stats, level, name, color) {
+  const ctx2 = document.getElementById('radarChart2').getContext('2d');
+  
+  // Destroy old chart if it exists
+  if (radar2) {
+    radar2.destroy();
+  }
+  
+  // Update global chartColor for plugin use
+  chartColor = color; 
+
+  // Make new chart 2 (not editable, shows labels, smaller center point)
+  radar2 = makeRadar(ctx2, stats, false, true, CHART2_CENTER);
+  radar2.data.datasets[0].borderColor = color;
+  radar2.data.datasets[0].backgroundColor = `${color}A6`; // A6 is 65% opacity
+  radar2.update();
+
+  // Update text elements
+  document.getElementById('overlayImg').src = document.getElementById('uploadImg').src;
+  document.getElementById('overlayName').textContent = name;
+  document.getElementById('overlayLevel').textContent = level;
+  
+  // Update subtle signature
+  const signatureElement = document.getElementById('subtleSignature');
+  signatureElement.textContent = "Chart made by Atlas Skies";
+}
+
+/* === Event Handlers === */
+
+// Image Upload Handler
+document.getElementById('imageUpload').addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('uploadImg').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Input Handlers (Triggers Chart 1 Update)
+const statInputs = ['levelInput', 'colorPicker', 'powerInput', 'defenseInput', 'speedInput', 'recoveryInput', 'trickInput'];
+statInputs.forEach(id => {
+  document.getElementById(id).addEventListener('input', updateChart);
+});
+
+// View Chart Button Handler
+document.getElementById('viewChartBtn').addEventListener('click', () => {
+  const name = document.getElementById('charName').value || "Unknown Character";
+  const level = parseFloat(document.getElementById('levelInput').value).toFixed(1);
+  const stats = getStats();
+  const color = document.getElementById('colorPicker').value;
+
+  updateOverlayChart(stats, level, name, color);
+  document.getElementById('overlay').classList.remove('hidden');
+});
+
+// Close Overlay Handler
+document.getElementById('closeBtn').addEventListener('click', () => {
+  document.getElementById('overlay').classList.add('hidden');
+});
+
+// Download Handler
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const name = document.getElementById('charName').value || "Unknown";
+  const filename = `${name.replace(/\s/g, '_')}_characterChart.png`;
+
+  // Get the canvas for Chart 2
+  const canvas = document.getElementById('radarChart2');
+
+  // Create a temporary link element to trigger the download
+  const link = document.createElement('a');
+  link.download = filename;
+  
+  // Convert canvas content to image URL
+  link.href = canvas.toDataURL('image/png');
+  
+  // Programmatically click the link
+  link.click();
+});
 
 
 /* === Chart 1 (Main) Initialization === */
-window.addEventListener('load', () => {
+// FIX: Using DOMContentLoaded ensures the script runs after the canvas element exists
+document.addEventListener('DOMContentLoaded', () => {
+  // Set initial image src for uploadImg based on charName
+  const initialName = document.getElementById('charName').value;
+  document.getElementById('uploadImg').src = `https://placehold.co/250x250/cccccc/333333?text=${initialName.replace(/\s/g, '+')}`;
+  
   const ctx1 = document.getElementById('radarChart1').getContext('2d');
-  radar1 = makeRadar(ctx1, null, true, false, CHART1_CENTER); 
-  chartColor = colorPicker.value;
-});
-
-/* === Update charts and info === */
-updateBtn.addEventListener('click', () => {
-  const vals = [
-    +powerInput.value || 0,
-    +speedInput.value || 0,
-    +trickInput.value || 0,
-    +recoveryInput.value || 0,
-    +defenseInput.value || 0
-  ];
-  
-  const capped = vals.map(v => Math.min(v, 10)); 
-  
-  chartColor = colorPicker.value;
-  // Opacity updated to 0.65
-  const fill = hexToRGBA(chartColor, 0.65); 
-
-  // Update Chart 1 (Main) with uncapped values
-  radar1.data.datasets[0].data = vals;
-  radar1.data.datasets[0].borderColor = chartColor;
-  radar1.data.datasets[0].pointBorderColor = chartColor;
-  radar1.data.datasets[0].backgroundColor = fill;
-  radar1.update();
-
-  // Update Chart 2 (Overlay) if it has been initialized
-  if (radar2Ready) {
-    radar2.data.datasets[0].data = capped;
-    radar2.data.datasets[0].borderColor = chartColor;
-    radar2.data.datasets[0].backgroundColor = fill;
-    radar2.update();
-  }
-
-  dispName.textContent = nameInput.value || '-';
-  dispAbility.textContent = abilityInput.value || '-';
-  dispLevel.textContent = levelInput.value || '-';
-});
-
-/* === Overlay controls === */
-viewBtn.addEventListener('click', () => {
-  overlay.classList.remove('hidden');
-  overlayImg.src = uploadedImg.src;
-  overlayName.textContent = nameInput.value || '-';
-  overlayAbility.textContent = abilityInput.value || '-';
-  overlayLevel.textContent = levelInput.value || '-';
-  
-  // NEW: Set the subtle signature text
-  subtleSignature.textContent = 'Chart made by Atlas Skies';
-
-  setTimeout(() => {
-    const img = document.getElementById('overlayImg');
-    const textBox = document.querySelector('.text-box');
-    const overlayChart = document.querySelector('.overlay-chart');
-    
-    // Force a redraw to get accurate dimensions
-    const imgHeight = img.offsetHeight; 
-    const textHeight = textBox.offsetHeight;
-    
-    // Calculate required size for alignment (Image Height + Text Box Height)
-    const targetVerticalSpan = imgHeight + textHeight; 
-    
-    // Use the new, smaller multiplier (1.0)
-    const targetSize = targetVerticalSpan * CHART_SIZE_MULTIPLIER;
-
-    // Apply the calculated size to the chart container
-    overlayChart.style.height = `${targetSize}px`;
-    overlayChart.style.width = `${targetSize}px`;
-
-    const ctx2 = document.getElementById('radarChart2').getContext('2d');
-    
-    // Initialize or resize Chart 2
-    if (!radar2Ready) {
-      // Pass the new targetSize/2 for the center coordinates
-      radar2 = makeRadar(ctx2, 10, false, true, { x: targetSize / 2, y: targetSize / 2 });
-      radar2Ready = true;
-    } else {
-      radar2.resize(); 
-    }
-
-    // Update Chart 2 data (CAPPED at 10)
-    const vals = [
-      +powerInput.value || 0,
-      +speedInput.value || 0,
-      +trickInput.value || 0,
-      +recoveryInput.value || 0,
-      +defenseInput.value || 0
-    ].map(v => Math.min(v, 10));
-
-    // Opacity updated to 0.65
-    const fill = hexToRGBA(chartColor, 0.65);
-    radar2.data.datasets[0].data = vals;
-    radar2.data.datasets[0].borderColor = chartColor;
-    radar2.data.datasets[0].backgroundColor = fill;
-    radar2.update();
-  }, 200);
-});
-
-closeBtn.addEventListener('click', () => overlay.classList.add('hidden'));
-
-/* === Download (hide buttons before capture) === */
-downloadBtn.addEventListener('click', () => {
-  downloadBtn.style.visibility = 'hidden';
-  closeBtn.style.visibility = 'hidden';
-  
-  // Use html2canvas to capture the characterBox
-  html2canvas(characterBox, { scale: 2 }).then(canvas => {
-    const link = document.createElement('a');
-    // Updated download filename format
-    link.download = (nameInput.value || 'UnOrdinary_Character') + '_characterChart.png'; 
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    
-    // Restore buttons after download
-    downloadBtn.style.visibility = 'visible';
-    closeBtn.style.visibility = 'visible';
-  });
-});
-
-/* === Image upload === */
-imgInput.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => { uploadedImg.src = ev.target.result; };
-  reader.readAsDataURL(file);
+  radar1 = makeRadar(ctx1, getStats(), true, false, CHART1_CENTER); 
+  chartColor = document.getElementById('colorPicker').value;
+  updateChart(); // Initial draw and color sync
 });
