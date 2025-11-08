@@ -8,9 +8,9 @@ function hexToRGBA(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-/* === Plugins === */
+/* === PLUGINS === */
 
-// Axis Labels with stat + value (main chart only)
+// Axis labels + values for MAIN chart
 const outlinedLabelsPlugin = {
   id: 'outlinedLabels',
   afterDraw(chart) {
@@ -20,8 +20,8 @@ const outlinedLabelsPlugin = {
     const labels = chart.data.labels;
     const cx = r.xCenter;
     const cy = r.yCenter;
-    const values = getStatValues(); // ✅ show actual input, not capped
-    const baseRadius = r.drawingArea * 1.15; // expand boundary a bit
+    const values = getStatValues(); // show real inputs
+    const baseRadius = r.drawingArea * 1.15;
     const base = -Math.PI / 2;
 
     ctx.save();
@@ -33,22 +33,22 @@ const outlinedLabelsPlugin = {
       const x = cx + baseRadius * Math.cos(a);
       const y = cy + baseRadius * Math.sin(a);
 
-      // Title (e.g. Power)
+      // Axis title
       ctx.font = '17px Candara';
       ctx.fillStyle = '#000';
       ctx.fillText(label, x, y - 10);
 
-      // Value below (always black italic Candara)
+      // Value (italic Candara, black)
       ctx.font = 'italic 15px Candara';
-      ctx.fillStyle = '#000';
-      const displayVal = isNaN(values[i]) ? '(0)' : `(${values[i].toFixed(1)})`;
-      ctx.fillText(displayVal, x, y + 12);
+      const val = isNaN(values[i]) ? 0 : values[i].toFixed(1);
+      ctx.fillText(`(${val})`, x, y + 12);
     });
+
     ctx.restore();
   }
 };
 
-// Pentagon background for overlay (with gradient + border)
+// Pentagon gradient + border for OVERLAY chart
 const radarBackgroundPlugin = {
   id: 'customBackground',
   beforeDraw(chart) {
@@ -61,12 +61,14 @@ const radarBackgroundPlugin = {
     const N = chart.data.labels.length;
     const start = -Math.PI / 2;
 
+    // Gradient from center → edge
     const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-    grad.addColorStop(0, '#92dfec');
-    grad.addColorStop(0.4, '#f8fcff');
-    grad.addColorStop(1, '#f8fcff');
+    grad.addColorStop(0, '#92dfec');   // center
+    grad.addColorStop(0.4, '#f8fcff'); // gradient stop
+    grad.addColorStop(1, '#f8fcff');   // outer edge
 
     ctx.save();
+    // Pentagon fill
     ctx.beginPath();
     for (let i = 0; i < N; i++) {
       const a = start + (i * 2 * Math.PI / N);
@@ -78,7 +80,7 @@ const radarBackgroundPlugin = {
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // Outer pentagon border
+    // Border outline
     ctx.strokeStyle = '#184046';
     ctx.lineWidth = 3;
     ctx.stroke();
@@ -86,10 +88,13 @@ const radarBackgroundPlugin = {
   }
 };
 
+// Register both plugins globally
 Chart.register(outlinedLabelsPlugin, radarBackgroundPlugin);
 
+/* === CREATE RADAR FUNCTION === */
 function makeRadar(ctx, isOverlay = false) {
   const currentColor = document.getElementById('colorPicker').value || '#92dfec';
+
   return new Chart(ctx, {
     type: 'radar',
     data: {
@@ -107,7 +112,7 @@ function makeRadar(ctx, isOverlay = false) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: 35 }, // expand boundary for main chart
+      layout: { padding: 35 },
       elements: { line: { tension: 0 } },
       scales: {
         r: {
@@ -128,6 +133,7 @@ function makeRadar(ctx, isOverlay = false) {
   });
 }
 
+/* === DOM ELEMENTS === */
 const inputs = ['powerInput', 'speedInput', 'trickInput', 'recoveryInput', 'defenseInput'];
 const colorPicker = document.getElementById('colorPicker');
 const viewBtn = document.getElementById('viewBtn');
@@ -137,29 +143,31 @@ const downloadBtn = document.getElementById('downloadBtn');
 const uploadedImg = document.getElementById('uploadedImg');
 const imgInput = document.getElementById('imgInput');
 
+/* === INITIALIZATION === */
 window.addEventListener('load', () => {
   const ctx1 = document.getElementById('radarChart1').getContext('2d');
   radar1 = makeRadar(ctx1, false);
   updateCharts();
 });
 
+/* === FUNCTIONS === */
 function getStatValues() {
   return inputs.map(id => +document.getElementById(id).value || 0);
 }
 
 function updateCharts() {
   const vals = getStatValues();
-  const cappedVals = vals.map(v => Math.min(v, 10)); // overlay max = 10
+  const cappedVals = vals.map(v => Math.min(v, 10));
   chartColor = colorPicker.value;
   const fill = hexToRGBA(chartColor, 0.7);
 
-  // Update main radar
+  // Main chart
   radar1.data.datasets[0].data = vals;
   radar1.data.datasets[0].borderColor = chartColor;
   radar1.data.datasets[0].backgroundColor = fill;
   radar1.update();
 
-  // Update overlay radar (capped)
+  // Overlay chart (capped)
   if (radar2) {
     radar2.data.datasets[0].data = cappedVals;
     radar2.data.datasets[0].borderColor = chartColor;
@@ -168,8 +176,12 @@ function updateCharts() {
   }
 }
 
+/* === EVENT LISTENERS === */
 inputs.forEach(id => document.getElementById(id).addEventListener('input', updateCharts));
 colorPicker.addEventListener('input', updateCharts);
+['nameInput', 'abilityInput', 'levelInput'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateCharts)
+);
 
 viewBtn.addEventListener('click', () => {
   overlay.classList.remove('hidden');
@@ -177,9 +189,10 @@ viewBtn.addEventListener('click', () => {
   document.getElementById('overlayName').textContent = document.getElementById('nameInput').value || '-';
   document.getElementById('overlayAbility').textContent = document.getElementById('abilityInput').value || '-';
   document.getElementById('overlayLevel').textContent = document.getElementById('levelInput').value || '-';
+
   const ctx2 = document.getElementById('radarChart2').getContext('2d');
   if (radar2) radar2.destroy();
-  radar2 = makeRadar(ctx2, true);
+  radar2 = makeRadar(ctx2, true); // ✅ now re-creates properly
   updateCharts();
 });
 
