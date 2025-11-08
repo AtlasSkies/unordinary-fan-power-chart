@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UnOrdinary Power Chart Maker</title>
+  <title>UnOrdinary Ability Chart Maker</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -13,14 +13,8 @@
     <div class="left">
       <div class="header-with-info">
         <div class="title-block">
-          <h1>UnOrdinary Power Chart Maker</h1>
+          <h1>UnOrdinary Ability Chart Maker</h1>
           <div class="subtitle">By Atlas Skies</div>
-        </div>
-        <div class="info-container">
-          <span class="info-icon">i</span>
-          <div class="info-hover">
-            Feel free to use this for fun (and if you're Uru-Chan, feel free to use this on the main comic). Please keep in mind Candara is copy righted so you can't use this for commercial use unless you pay.
-          </div>
         </div>
       </div>
 
@@ -28,15 +22,12 @@
       <img id="uploadedImg" class="upload-img" alt="Uploaded Image">
 
       <div class="info-box">
-        <b>Name:</b> <span id="dispName">-</span><br>
-        <b>Ability:</b> <span id="dispAbility">-</span><br>
-        <b>Level:</b> <span id="dispLevel">-</span>
+        <label><b>Name:</b> <input type="text" id="nameInput"></label>
+        <label><b>Ability:</b> <input type="text" id="abilityInput"></label>
+        <label><b>Level:</b> <input type="text" id="levelInput"></label>
       </div>
 
       <div class="inputs">
-        <label>Name: <input type="text" id="nameInput"></label>
-        <label>Ability: <input type="text" id="abilityInput"></label>
-        <label>Level: <input type="text" id="levelInput"></label>
         <label>Power: <input type="number" id="powerInput" step="0.1" min="0"></label>
         <label>Speed: <input type="number" id="speedInput" step="0.1" min="0"></label>
         <label>Trick: <input type="number" id="trickInput" step="0.1" min="0"></label>
@@ -44,7 +35,6 @@
         <label>Defense: <input type="number" id="defenseInput" step="0.1" min="0"></label>
         <label>Ability Color: <input type="color" id="colorPicker" value="#92dfec"></label>
 
-        <button id="updateBtn">Update Chart</button>
         <button id="viewBtn">View Character Chart</button>
       </div>
     </div>
@@ -71,9 +61,6 @@
       <div class="overlay-chart">
         <canvas id="radarChart2"></canvas>
       </div>
-      
-      <!-- Subtle Signature Element (Very faint text) -->
-      <div id="subtleSignature" class="subtle-signature"></div>
 
       <button id="downloadBtn">Download Character Chart</button>
     </div>
