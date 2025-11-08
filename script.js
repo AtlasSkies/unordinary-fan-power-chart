@@ -211,4 +211,17 @@ downloadBtn.addEventListener('click', () => {
   html2canvas(document.getElementById('characterBox'), { scale: 2 }).then(canvas => {
     const link = document.createElement('a');
     link.download = `${document.getElementById('nameInput').value || 'Character'}.png`;
-    link.href
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    downloadBtn.style.visibility = 'visible';
+    closeBtn.style.visibility = 'visible';
+  });
+});
+
+imgInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { uploadedImg.src = ev.target.result; };
+  reader.readAsDataURL(file);
+});
