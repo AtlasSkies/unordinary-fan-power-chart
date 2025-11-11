@@ -17,12 +17,14 @@
           <h1>UnOrdinary Ability Chart Maker</h1>
           <div class="subtitle">
             By Atlas Skies
-            <span class="info-icon">ℹ️
-              <span class="tooltip-text">
+            <!-- Info icon with accessible toggle for mobile -->
+            <button class="info-icon" type="button" aria-expanded="false" aria-label="Credits info">
+              ℹ️
+              <span class="tooltip-text" role="tooltip">
                 Credit to Atlas Skies would be greatly appreciated, but not necessary.<br>
                 If you're Uru-Chan, I love the comic — feel free to use this, lol.
               </span>
-            </span>
+            </button>
           </div>
         </div>
       </div>
@@ -88,6 +90,30 @@
     </div>
   </div>
 
+  <!-- Your existing script.js should still be included -->
   <script src="script.js"></script>
+
+  <!-- Tiny helper to make the tooltip work on iOS tap -->
+  <script>
+    (function () {
+      const infoBtn = document.querySelector('.info-icon');
+      if (!infoBtn) return;
+
+      const toggle = (open) => {
+        infoBtn.classList.toggle('open', open);
+        infoBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      };
+
+      infoBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggle(!infoBtn.classList.contains('open'));
+      });
+
+      document.addEventListener('click', () => toggle(false));
+      infoBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') toggle(false);
+      });
+    })();
+  </script>
 </body>
 </html>
